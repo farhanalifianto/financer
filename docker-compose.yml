@@ -84,10 +84,11 @@ services:
       - app-network
     ports:
       - "3004:3004" # REST API
+      - "50052:50052"
 
   nginx:
     image: nginx:latest
-    restart: on-failure
+    restart: always
     ports:
       - "8080:80"
     volumes:

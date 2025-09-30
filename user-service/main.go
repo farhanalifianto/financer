@@ -9,7 +9,7 @@ import (
 	"user-service/grpc_server"
 	"user-service/model"
 
-	pb "user-service/proto"
+	pb "user-service/proto/user"
 	"user-service/routes"
 
 	"github.com/gofiber/fiber/v2"

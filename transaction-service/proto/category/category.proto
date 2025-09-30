@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package category;
+option go_package = "proto/category";
+
+service CategoryService {
+  rpc GetCategoryByID(GetCategoryRequest) returns (CategoryResponse);
+}
+
+message GetCategoryRequest {
+  uint32 id = 1;
+}
+
+message CategoryResponse {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+}

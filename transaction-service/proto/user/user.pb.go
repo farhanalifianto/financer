@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.9
 // 	protoc        v5.27.1
-// source: proto/category.proto
+// source: proto/user/user.proto
 
 package proto
 
@@ -30,7 +30,7 @@ type GetUserRequest struct {
 
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
-	mi := &file_proto_category_proto_msgTypes[0]
+	mi := &file_proto_user_user_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -42,7 +42,7 @@ func (x *GetUserRequest) String() string {
 func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_category_proto_msgTypes[0]
+	mi := &file_proto_user_user_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -55,7 +55,7 @@ func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserRequest.ProtoReflect.Descriptor instead.
 func (*GetUserRequest) Descriptor() ([]byte, []int) {
-	return file_proto_category_proto_rawDescGZIP(), []int{0}
+	return file_proto_user_user_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *GetUserRequest) GetId() uint32 {
@@ -77,7 +77,7 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	mi := &file_proto_category_proto_msgTypes[1]
+	mi := &file_proto_user_user_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -89,7 +89,7 @@ func (x *GetUserResponse) String() string {
 func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_category_proto_msgTypes[1]
+	mi := &file_proto_user_user_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -102,7 +102,7 @@ func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserResponse.ProtoReflect.Descriptor instead.
 func (*GetUserResponse) Descriptor() ([]byte, []int) {
-	return file_proto_category_proto_rawDescGZIP(), []int{1}
+	return file_proto_user_user_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *GetUserResponse) GetId() uint32 {
@@ -133,11 +133,11 @@ func (x *GetUserResponse) GetRole() string {
 	return ""
 }
 
-var File_proto_category_proto protoreflect.FileDescriptor
+var File_proto_user_user_proto protoreflect.FileDescriptor
 
-const file_proto_category_proto_rawDesc = "" +
+const file_proto_user_user_proto_rawDesc = "" +
 	"\n" +
-	"\x14proto/category.proto\x12\x04user\" \n" +
+	"\x15proto/user/user.proto\x12\x04user\" \n" +
 	"\x0eGetUserRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\"_\n" +
 	"\x0fGetUserResponse\x12\x0e\n" +
@@ -149,23 +149,23 @@ const file_proto_category_proto_rawDesc = "" +
 	"\vGetUserByID\x12\x14.user.GetUserRequest\x1a\x15.user.GetUserResponseB\bZ\x06proto/b\x06proto3"
 
 var (
-	file_proto_category_proto_rawDescOnce sync.Once
-	file_proto_category_proto_rawDescData []byte
+	file_proto_user_user_proto_rawDescOnce sync.Once
+	file_proto_user_user_proto_rawDescData []byte
 )
 
-func file_proto_category_proto_rawDescGZIP() []byte {
-	file_proto_category_proto_rawDescOnce.Do(func() {
-		file_proto_category_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_category_proto_rawDesc), len(file_proto_category_proto_rawDesc)))
+func file_proto_user_user_proto_rawDescGZIP() []byte {
+	file_proto_user_user_proto_rawDescOnce.Do(func() {
+		file_proto_user_user_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_proto_user_user_proto_rawDesc), len(file_proto_user_user_proto_rawDesc)))
 	})
-	return file_proto_category_proto_rawDescData
+	return file_proto_user_user_proto_rawDescData
 }
 
-var file_proto_category_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_proto_category_proto_goTypes = []any{
+var file_proto_user_user_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_user_user_proto_goTypes = []any{
 	(*GetUserRequest)(nil),  // 0: user.GetUserRequest
 	(*GetUserResponse)(nil), // 1: user.GetUserResponse
 }
-var file_proto_category_proto_depIdxs = []int32{
+var file_proto_user_user_proto_depIdxs = []int32{
 	0, // 0: user.UserService.GetUserByID:input_type -> user.GetUserRequest
 	1, // 1: user.UserService.GetUserByID:output_type -> user.GetUserResponse
 	1, // [1:2] is the sub-list for method output_type
@@ -175,26 +175,26 @@ var file_proto_category_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_proto_category_proto_init() }
-func file_proto_category_proto_init() {
-	if File_proto_category_proto != nil {
+func init() { file_proto_user_user_proto_init() }
+func file_proto_user_user_proto_init() {
+	if File_proto_user_user_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_category_proto_rawDesc), len(file_proto_category_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_user_user_proto_rawDesc), len(file_proto_user_user_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_proto_category_proto_goTypes,
-		DependencyIndexes: file_proto_category_proto_depIdxs,
-		MessageInfos:      file_proto_category_proto_msgTypes,
+		GoTypes:           file_proto_user_user_proto_goTypes,
+		DependencyIndexes: file_proto_user_user_proto_depIdxs,
+		MessageInfos:      file_proto_user_user_proto_msgTypes,
 	}.Build()
-	File_proto_category_proto = out.File
-	file_proto_category_proto_goTypes = nil
-	file_proto_category_proto_depIdxs = nil
+	File_proto_user_user_proto = out.File
+	file_proto_user_user_proto_goTypes = nil
+	file_proto_user_user_proto_depIdxs = nil
 }

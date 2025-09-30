@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	pb "category-service/proto" // hasil generate proto, copy dari user-service
+	pb "transaction-service/proto/user" // hasil generate proto, copy dari user-service
 
 	"google.golang.org/grpc"
 )
@@ -27,7 +27,7 @@ type UserInfo struct {
     Name  string
 }
 
-func (uc *UserClient) GetUserEmail(userID uint) (*UserInfo, error) {
+func (uc *UserClient) GetUserInfo(userID uint) (*UserInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 

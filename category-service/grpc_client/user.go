@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	pb "transaction-service/proto" // hasil generate proto, copy dari user-service
+	pb "category-service/proto/user" // hasil generate proto, copy dari user-service
 
 	"google.golang.org/grpc"
 )

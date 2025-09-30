@@ -2,13 +2,18 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	pb "category-service/proto/category"
+
+	"category-service/grpc_server"
 	"category-service/middleware"
 	"category-service/model"
 	"category-service/routes"
@@ -38,13 +43,29 @@ func initDB() {
 func main() {
 	initDB()
 
-	app := fiber.New()
-	app.Use(logger.New())
+	go func(){
+		app := fiber.New()
+		app.Use(logger.New())
 
-	// inject DB & middleware ke routes
-	routes.RegisterCategoryRoutes(app, DB, middleware.AuthRequired)
+		// inject DB & middleware ke routes
+		routes.RegisterCategoryRoutes(app, DB, middleware.AuthRequired)
+		if err := app.Listen(":3004"); err != nil {
+            log.Fatalf("failed to start REST server: %v", err)
+        }
+	}()
+	lis, err := net.Listen("tcp", ":50052")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
 
-	app.Listen(":3004")
+	grpcServer := grpc.NewServer()
+	pb.RegisterCategoryServiceServer(grpcServer, &grpc_server.CategoryServer{DB: DB})
+
+	log.Println("gRPC CategoryService running on :50052")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+	
 }
 
 func getEnv(k, d string) string {

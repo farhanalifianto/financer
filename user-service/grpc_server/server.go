@@ -3,7 +3,7 @@ package grpc_server
 import (
 	"context"
 	"user-service/model"
-	pb "user-service/proto"
+	pb "user-service/proto/user"
 
 	"log"
 

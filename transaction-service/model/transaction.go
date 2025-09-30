@@ -7,7 +7,7 @@ type Transaction struct {
 	Name      	string    `json:"name"`
 	Desc      	string    `json:"desc"`
 	OwnerID  	uint     `json:"owner_id"`
-	CategoryID	string    `json:"category"`
+	CategoryID	uint   `json:"category"`
 	CreatedAt 	time.Time `json:"created_at"`
 	Amount    	float64   `json:"amount"`
 }
