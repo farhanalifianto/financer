@@ -12,6 +12,17 @@ services:
       - user-db-data:/var/lib/postgresql/data
     networks:
       - app-network
+  category-db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: categorydb
+    volumes:
+      - category-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
 
   transaction-db:
     image: postgres:15
@@ -50,7 +61,6 @@ services:
       - DB_USER=postgres
       - DB_PASS=postgres
       - DB_NAME=transactiondb
-
     depends_on:
       - transaction-db
       - user-service
@@ -58,6 +68,22 @@ services:
       - app-network
     ports:
       - "3003:3003" # REST API (kalau ada)
+
+  category-service:
+    build: ./category-service
+    environment:
+      - DB_HOST=category-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_NAME=categorydb
+      - JWT_SECRET=verysecretkey
+    depends_on:
+      - category-db
+    networks:
+      - app-network
+    ports:
+      - "3004:3004" # REST API
 
   nginx:
     image: nginx:latest
@@ -69,12 +95,14 @@ services:
     depends_on:
       - user-service
       - transaction-service
+      - category-service
     networks:
       - app-network
 
 volumes:
   user-db-data:
   transaction-db-data:
+  category-db-data:
 
 networks:
   app-network:

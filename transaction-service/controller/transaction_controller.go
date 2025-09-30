@@ -68,7 +68,6 @@ func (tc *TransactionController) List(c *fiber.Ctx) error {
 			"category":   t.CategoryID,
 			"created_at": t.CreatedAt,
 			"amount":     t.Amount,
-			"type":       t.Type,
 			"owner":      UserInfo.Email,
 			"owner_name": UserInfo.Name,
 			 
@@ -140,7 +139,6 @@ type EditRequest struct {
 	Name 		string 		`json:"name"`
 	Amount    	float64  	`json:"amount"`
 	Desc      	string   	`json:"desc"`
-	Type	  	string   	`json:"type"`
 }
 
 func (tc *TransactionController) Update(c *fiber.Ctx) error {
@@ -164,7 +162,6 @@ func (tc *TransactionController) Update(c *fiber.Ctx) error {
     transaction.Name = body.Name
     transaction.Amount = body.Amount
     transaction.Desc = body.Desc
-    transaction.Type = body.Type
 
     if err := tc.DB.Save(&transaction).Error; err != nil {
         return c.Status(500).JSON(fiber.Map{"error": err.Error()})
