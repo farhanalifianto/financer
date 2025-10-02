@@ -10,12 +10,10 @@ import (
 	"google.golang.org/grpc"
 )
 
-// CategoryClient untuk menampung koneksi dan client gRPC
 type CategoryClient struct {
 	client pb.CategoryServiceClient
 }
 
-// NewCategoryClient inisialisasi koneksi ke category-service
 func NewCategoryClient() *CategoryClient {
 	conn, err := grpc.Dial("category-service:50052", grpc.WithInsecure())
 	if err != nil {
@@ -25,7 +23,6 @@ func NewCategoryClient() *CategoryClient {
 	return &CategoryClient{client: c}
 }
 
-// CategoryInfo hasil dari CategoryService
 type CategoryInfo struct {
 	Name string
 	Type string
@@ -33,7 +30,6 @@ type CategoryInfo struct {
 	OwnerID uint
 }
 
-// GetCategoryInfo ambil info kategori berdasarkan ID
 func (cc *CategoryClient) GetCategoryInfo(catID uint) (*CategoryInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()

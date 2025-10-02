@@ -12,12 +12,12 @@ func RegisterCategoryRoutes(app *fiber.App, db *gorm.DB, authMiddleware fiber.Ha
 	cc := &controller.CategoryController{DB: db}
 
 	api := app.Group("/api")
-	c := api.Group("/category") // pakai plural biar konsisten REST
+	c := api.Group("/category") 
 
-	c.Get("/", authMiddleware, cc.List)                                       // list kategori milik user
-	c.Get("/all", authMiddleware, middleware.RoleRequired("admin"), cc.List)  // list semua kategori (khusus admin)
-	c.Get("/:id", authMiddleware, cc.Get)                                     // detail kategori
-	c.Post("/", authMiddleware, cc.Create)                                    // buat kategori
-	c.Put("/:id", authMiddleware, cc.Update)                                  // update kategori
-	c.Delete("/:id", authMiddleware, cc.Delete)                               // hapus kategori
+	c.Get("/", authMiddleware, cc.List)                                       
+	c.Get("/all", authMiddleware, middleware.RoleRequired("admin"), cc.List)  
+	c.Get("/:id", authMiddleware, cc.Get)                                     
+	c.Post("/", authMiddleware, cc.Create)                                    
+	c.Put("/:id", authMiddleware, cc.Update)                                  
+	c.Delete("/:id", authMiddleware, cc.Delete)                               
 }

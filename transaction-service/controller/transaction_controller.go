@@ -147,7 +147,6 @@ func (tc *TransactionController) CreateFiltered(c *fiber.Ctx) error {
 	in.OwnerID = userID
 	in.CreatedAt = time.Now()
 
-	// 🔸 Ambil info kategori via gRPC
 	categoryClient := grpc_client.NewCategoryClient()
 	categoryInfo, err := categoryClient.GetCategoryInfo(in.CategoryID)
 	if err != nil {
@@ -157,14 +156,12 @@ func (tc *TransactionController) CreateFiltered(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "category not found"})
 	}
 
-	// 🧠 Validasi: kategori harus milik user yang sedang login
 	if uint64(categoryInfo.OwnerID) != uint64(userID) {
 		return c.Status(403).JSON(fiber.Map{
 			"error": "you do not own this category",
 		})
 	}
 
-	// 💾 Simpan transaksi
 	if err := tc.DB.Create(&in).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -172,7 +169,7 @@ func (tc *TransactionController) CreateFiltered(c *fiber.Ctx) error {
 	return c.Status(201).JSON(in)
 }
 
-// Get transaction by ID
+// Get transaction by id
 func (tc *TransactionController) Get(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
@@ -192,21 +189,18 @@ func (tc *TransactionController) Get(c *fiber.Ctx) error {
 	var response []map[string]interface{}
 
 	for _, t := range transaction {
-		// Ambil info user
 		userInfo, err := userClient.GetUserInfo(t.OwnerID)
 		if err != nil {
 			log.Printf("failed to get user info for ID %d: %v", t.OwnerID, err)
 			continue
 		}
 
-		// Ambil info kategori
 		categoryInfo, err := categoryClient.GetCategoryInfo(t.CategoryID)
 		if err != nil {
 			log.Printf("failed to get category info for ID %d: %v", t.CategoryID, err)
 			continue
 		}
 
-		// Bentuk response
 		response = append(response, map[string]interface{}{
 			"id":           t.ID,
 			"name":         t.Name,
@@ -335,7 +329,7 @@ func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
 	var totalIncome float64
 	var totalExpense float64
 
-	// 🧠 Cache lokal kategori supaya tidak gRPC berkali-kali
+	// caching
 	categoryCache := make(map[uint]*grpc_client.CategoryInfo)
 
 	for _, t := range transactions {
@@ -343,7 +337,7 @@ func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
 		var ok bool
 
 		if category, ok = categoryCache[t.CategoryID]; !ok {
-			// Kalau belum ada di cache → ambil lewat gRPC
+			// if category doenst exist in cache
 			cat, err := categoryClient.GetCategoryInfo(t.CategoryID)
 			if err != nil {
 				return c.Status(500).JSON(fiber.Map{
@@ -354,7 +348,6 @@ func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
 			categoryCache[t.CategoryID] = category
 		}
 
-		// Hitung total berdasarkan tipe
 		if category.Type == "income" {
 			totalIncome += float64(t.Amount)
 		} else if category.Type == "expense" {

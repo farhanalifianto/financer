@@ -58,7 +58,7 @@ func (cc *CategoryController) Create(c *fiber.Ctx) error {
 
 	if category.Type != "income" && category.Type != "expense" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Type harus 'income' atau 'expense'",
+			"error": "Type should be 'income' or 'expense'",
 		})
 	}
 
