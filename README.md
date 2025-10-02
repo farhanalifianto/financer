@@ -147,7 +147,7 @@ Built with ❤️ using Go and gRPC.
 
 ## Contact
 
-Farhan Alifianto - [https://github.com/farhanalifianto/goecommerce](https://github.com/farhanalifianto/goecommerce) - farhanalifianto@gmail.com
+Farhan Alifianto - [https://github.com/farhanalifianto/fintrac](https://github.com/farhanalifianto/fintrac) - farhanalifianto@gmail.com
 
 
 
