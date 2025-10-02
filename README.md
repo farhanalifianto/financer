@@ -85,7 +85,7 @@ This will start:
 - Redis
 
 - Nginx reverse proxy
-- 
+  
 ### 4️⃣ Access the Services
 
 get postman json file in root folder
@@ -143,6 +143,11 @@ Open a Pull Request 🚀
 
 Built with ❤️ using Go and gRPC.
 
+
+
+## Contact
+
+Farhan Alifianto - [https://github.com/farhanalifianto/goecommerce](https://github.com/farhanalifianto/goecommerce) - farhanalifianto@gmail.com
 
 
 
