@@ -12,7 +12,7 @@ It allows users to manage **income/expense categories**, set budgets, create tra
 - 💳 **Transaction Service** — Record user transactions, calculate balances per category, and enforce category ownership.  
 - 🔗 **gRPC Communication** between services.  
 - 🐳 **Dockerized Microservices** for easy deployment.  
-- ⚡ ** Redis Caching** for faster category lookups.  
+- ⚡ **Redis Caching** for faster category lookups.  
 - 🌐 **Nginx Reverse Proxy** as the API gateway.
 
 ---
