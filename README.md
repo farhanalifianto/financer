@@ -112,11 +112,11 @@ Transaction Endpoints
 
 - GET /transaction/budget → Get budget usage and status
 
-- - GET /transaction/:id → Get transaction id
+- GET /transaction/:id → Get transaction id
 
 - GET /transaction/budget → Get budget usage per category
 
-🤝 Contributing
+## 🤝 Contributing
 
 Pull requests and suggestions are welcome!
 If you'd like to contribute:
@@ -129,7 +129,7 @@ Commit your changes
 
 Open a Pull Request 🚀
 
-🧠 Future Improvements
+## 🧠 Future Improvements
 
 ✅ Centralized Auth Service (JWT)
 
