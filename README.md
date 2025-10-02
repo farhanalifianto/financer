@@ -1,4 +1,4 @@
-# 💰 Financer — Microservices Budget & Transaction Manager
+# 💰 Fintrac — Microservices Budget & Transaction Manager
 
 Financer is a microservices-based financial tracking application built using **Go**, **gRPC**, **Docker**, and **PostgreSQL**.  
 It allows users to manage **income/expense categories**, set budgets, create transactions, and calculate balances per category — all through a clean and modular microservices architecture.
