@@ -29,6 +29,8 @@ func NewCategoryClient() *CategoryClient {
 type CategoryInfo struct {
 	Name string
 	Type string
+	Budget float64
+	OwnerID uint
 }
 
 // GetCategoryInfo ambil info kategori berdasarkan ID
@@ -44,5 +46,7 @@ func (cc *CategoryClient) GetCategoryInfo(catID uint) (*CategoryInfo, error) {
 	return &CategoryInfo{
 		Name: res.Name,
 		Type: res.Type,
+		Budget: float64(res.Budget),
+		OwnerID: uint(res.Ownerid),
 	}, nil
 }

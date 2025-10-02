@@ -137,6 +137,41 @@ func (tc *TransactionController) Create(c *fiber.Ctx) error {
 	return c.Status(201).JSON(in)
 }
 
+func (tc *TransactionController) CreateFiltered(c *fiber.Ctx) error {
+	var in model.Transaction
+	if err := c.BodyParser(&in); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid payload"})
+	}
+
+	userID := c.Locals("user_id").(uint)
+	in.OwnerID = userID
+	in.CreatedAt = time.Now()
+
+	// 🔸 Ambil info kategori via gRPC
+	categoryClient := grpc_client.NewCategoryClient()
+	categoryInfo, err := categoryClient.GetCategoryInfo(in.CategoryID)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": fmt.Sprintf("invalid category ID: %d", in.CategoryID)})
+	}
+	if categoryInfo == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "category not found"})
+	}
+
+	// 🧠 Validasi: kategori harus milik user yang sedang login
+	if uint64(categoryInfo.OwnerID) != uint64(userID) {
+		return c.Status(403).JSON(fiber.Map{
+			"error": "you do not own this category",
+		})
+	}
+
+	// 💾 Simpan transaksi
+	if err := tc.DB.Create(&in).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(201).JSON(in)
+}
+
 // Get transaction by ID
 func (tc *TransactionController) Get(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
@@ -249,7 +284,7 @@ func (tc *TransactionController) Delete(c *fiber.Ctx) error {
 }
 
 func (tc *TransactionController) GetBalancerr(c *fiber.Ctx) error {
-	// Ambil semua transaksi dari DB
+	
 	var transactions []model.Transaction
 
 	userID := c.Locals("user_id").(uint)
@@ -264,7 +299,7 @@ func (tc *TransactionController) GetBalancerr(c *fiber.Ctx) error {
 	var totalExpense float64
 
 	for _, t := range transactions {
-		// Ambil detail kategori lewat gRPC
+		
 		category, err := categoryClient.GetCategoryInfo(t.CategoryID)
 		if err != nil {
 			return c.Status(500).JSON(fiber.Map{
@@ -336,3 +371,114 @@ func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
 	})
 }
 
+func (tc *TransactionController) GetBalanceCategory(c *fiber.Ctx) error {
+	var transactions []model.Transaction
+	userID := c.Locals("user_id").(uint)
+
+	if err := tc.DB.Where("owner_id = ?", userID).Find(&transactions).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	categoryClient := grpc_client.NewCategoryClient()
+	categoryCache := make(map[uint]*grpc_client.CategoryInfo)
+
+	type CategorySummary struct {
+		CategoryID   uint    `json:"category_id"`
+		CategoryName string  `json:"category_name"`
+		Type         string  `json:"type"`
+		Total        float64 `json:"total"`
+	}
+
+	categoryTotals := make(map[uint]*CategorySummary)
+
+	for _, t := range transactions {
+		category, ok := categoryCache[t.CategoryID]
+		if !ok {
+			cat, err := categoryClient.GetCategoryInfo(t.CategoryID)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error": fmt.Sprintf("failed to fetch category info for ID %d", t.CategoryID),
+				})
+			}
+			category = cat
+			categoryCache[t.CategoryID] = category
+		}
+
+		if _, exists := categoryTotals[t.CategoryID]; !exists {
+			categoryTotals[t.CategoryID] = &CategorySummary{
+				CategoryID:   t.CategoryID,
+				CategoryName: category.Name,
+				Type:         category.Type,
+				Total:        0,
+			}
+		}
+
+		categoryTotals[t.CategoryID].Total += float64(t.Amount)
+	}
+
+	result := make([]CategorySummary, 0, len(categoryTotals))
+	for _, summary := range categoryTotals {
+		result = append(result, *summary)
+	}
+
+	return c.JSON(fiber.Map{
+		"categories": result,
+	})
+}
+
+func (tc *TransactionController) GetBudgetStatus(c *fiber.Ctx) error {
+	userID := c.Locals("user_id").(uint)
+
+	var transactions []model.Transaction
+	if err := tc.DB.Where("owner_id = ?", userID).Find(&transactions).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	categoryClient := grpc_client.NewCategoryClient()
+
+	categoryCache := make(map[uint]*grpc_client.CategoryInfo)
+
+	budgetUsage := make(map[uint]float64)
+
+	for _, t := range transactions {
+		var category *grpc_client.CategoryInfo
+		var ok bool
+		if category, ok = categoryCache[t.CategoryID]; !ok {
+			cat, err := categoryClient.GetCategoryInfo(t.CategoryID)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{
+					"error": fmt.Sprintf("failed to fetch category info for ID %d", t.CategoryID),
+				})
+			}
+			category = cat
+			categoryCache[t.CategoryID] = category
+		}
+
+		if category.Type == "expense" {
+			budgetUsage[t.CategoryID] += float64(t.Amount)
+		}
+	}
+
+	results := []fiber.Map{}
+	for categoryID, cat := range categoryCache {
+		if cat.Type == "expense" {
+			used := budgetUsage[categoryID]
+			remaining := cat.Budget - used
+			status := "within budget"
+			if remaining < 0 {
+				status = "over budget"
+			}
+
+			results = append(results, fiber.Map{
+				"category_id": categoryID,
+				"name":        cat.Name,
+				"budget":      cat.Budget,
+				"used":        used,
+				"remaining":   remaining,
+				"status":      status,
+			})
+		}
+	}
+
+	return c.JSON(results)
+}

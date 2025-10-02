@@ -4,7 +4,7 @@
 // 	protoc        v5.27.1
 // source: proto/category/category.proto
 
-package categorypb
+package category
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -70,6 +70,8 @@ type CategoryResponse struct {
 	Id            uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Budget        float32                `protobuf:"fixed32,4,opt,name=budget,proto3" json:"budget,omitempty"`
+	Ownerid       uint32                 `protobuf:"varint,5,opt,name=ownerid,proto3" json:"ownerid,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -125,19 +127,35 @@ func (x *CategoryResponse) GetType() string {
 	return ""
 }
 
+func (x *CategoryResponse) GetBudget() float32 {
+	if x != nil {
+		return x.Budget
+	}
+	return 0
+}
+
+func (x *CategoryResponse) GetOwnerid() uint32 {
+	if x != nil {
+		return x.Ownerid
+	}
+	return 0
+}
+
 var File_proto_category_category_proto protoreflect.FileDescriptor
 
 const file_proto_category_category_proto_rawDesc = "" +
 	"\n" +
 	"\x1dproto/category/category.proto\x12\bcategory\"$\n" +
 	"\x12GetCategoryRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\rR\x02id\"J\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\"|\n" +
 	"\x10CategoryResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\rR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type2^\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12\x16\n" +
+	"\x06budget\x18\x04 \x01(\x02R\x06budget\x12\x18\n" +
+	"\aownerid\x18\x05 \x01(\rR\aownerid2^\n" +
 	"\x0fCategoryService\x12K\n" +
-	"\x0fGetCategoryByID\x12\x1c.category.GetCategoryRequest\x1a\x1a.category.CategoryResponseB\x12Z\x10proto/categorypbb\x06proto3"
+	"\x0fGetCategoryByID\x12\x1c.category.GetCategoryRequest\x1a\x1a.category.CategoryResponseB\x10Z\x0eproto/categoryb\x06proto3"
 
 var (
 	file_proto_category_category_proto_rawDescOnce sync.Once

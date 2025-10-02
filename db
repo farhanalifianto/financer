@@ -1,3 +1,4 @@
 docker exec -it prototype_2-transaction-db-1 psql -U postgres -d transactiondb
+docker exec -it prototype_2-category-db-1  psql -U postgres -d categorydb
 
 protoc --go_out=. --go-grpc_out=. proto/category.proto

@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package category;
-option go_package = "proto/categorypb";
+option go_package = "proto/category";
 
 service CategoryService {
   rpc GetCategoryByID(GetCategoryRequest) returns (CategoryResponse);
@@ -15,4 +15,6 @@ message CategoryResponse {
   uint32 id = 1;
   string name = 2;
   string type = 3;
+  float budget = 4;
+  uint32 ownerid =5;
 }

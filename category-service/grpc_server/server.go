@@ -25,5 +25,7 @@ func (s *CategoryServer) GetCategoryByID(ctx context.Context, req *pb.GetCategor
 		Id:   uint32(cat.ID),
 		Name: cat.Name,
 		Type: cat.Type,
+		Budget: float32(cat.Budget),
+		Ownerid: uint32(cat.OwnerID),
 	}, nil
 }

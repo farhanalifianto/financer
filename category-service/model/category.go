@@ -8,4 +8,5 @@ type Category struct {
 	OwnerID  	uint     `json:"owner_id"`
 	CreatedAt 	time.Time `json:"created_at"`
 	Type		string    `json:"type"` // "expense" or "income"
+	Budget		float64   `json:"budget"`
 }

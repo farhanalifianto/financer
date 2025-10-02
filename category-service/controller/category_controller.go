@@ -42,6 +42,7 @@ func (cc *CategoryController) List(c *fiber.Ctx) error {
 			"name":       c.Name,
 			"owner":      UserInfo.Email,
 			"type":       c.Type,
+			"bugdet":     c.Budget,
 		})
 	}
 
@@ -55,6 +56,16 @@ func (cc *CategoryController) Create(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	if category.Type != "income" && category.Type != "expense" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Type harus 'income' atau 'expense'",
+		})
+	}
+
+	if category.Type == "income" {
+		category.Budget = 0
+	}
+
 	userID := c.Locals("user_id").(uint)
 	category.OwnerID = userID
 	category.CreatedAt = time.Now()
@@ -65,6 +76,7 @@ func (cc *CategoryController) Create(c *fiber.Ctx) error {
 
 	return c.Status(201).JSON(category)
 }
+
 
 // gget category by id
 func (cc *CategoryController) Get(c *fiber.Ctx) error {
@@ -95,6 +107,7 @@ func (cc *CategoryController) Get(c *fiber.Ctx) error {
 			"name":       c.Name,
 			"owner":      UserInfo.Email,
 			"type":       c.Type,
+			"bugdet":     c.Budget,
 		})
 	}
 
@@ -106,6 +119,7 @@ func (cc *CategoryController) Get(c *fiber.Ctx) error {
 
 type EditRequest struct {
 	Name 		string 		`json:"name"`
+	Budget    	float64  	`json:"budget"`
 }
 
 func (cc *CategoryController) Update(c *fiber.Ctx) error {

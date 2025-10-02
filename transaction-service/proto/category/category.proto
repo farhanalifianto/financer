@@ -12,7 +12,9 @@ message GetCategoryRequest {
 }
 
 message CategoryResponse {
-  string id = 1;
+  uint32 id = 1;
   string name = 2;
   string type = 3;
+  float budget = 4;
+  uint32 ownerid =5;
 }
