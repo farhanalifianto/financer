@@ -41,7 +41,6 @@ func main() {
 	app := fiber.New()
 	app.Use(logger.New())
 
-	// inject DB & middleware ke routes
 	routes.RegisterTransactionRoutes(app, DB, middleware.AuthRequired)
 
 	app.Listen(":3003")

@@ -43,16 +43,19 @@ func initDB() {
 func main() {
 	initDB()
 
+
+	// fiber goroutines
 	go func(){
 		app := fiber.New()
 		app.Use(logger.New())
 
-		// inject DB & middleware ke routes
 		routes.RegisterCategoryRoutes(app, DB, middleware.AuthRequired)
 		if err := app.Listen(":3004"); err != nil {
             log.Fatalf("failed to start REST server: %v", err)
         }
 	}()
+
+	// grpc main thread
 	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -60,8 +63,8 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterCategoryServiceServer(grpcServer, &grpc_server.CategoryServer{DB: DB})
-
 	log.Println("gRPC CategoryService running on :50052")
+	
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

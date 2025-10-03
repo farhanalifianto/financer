@@ -51,26 +51,26 @@ func main() {
 	initDB()
     jwtSecret := getEnv("JWT_SECRET", "secret")
 
-    // Jalankan Fiber di goroutine
+    //fiber goroutines
     go func() {
         app := fiber.New()
         app.Use(logger.New())
         routes.RegisterUserRoutes(app, DB, jwtSecret)
 
         if err := app.Listen(":3001"); err != nil {
-            log.Fatalf("failed to start REST server: %v", err)
+            log.Fatalf("failed to start user-service: %v", err)
         }
 		
     }()
 
-    // Jalankan gRPC di main thread
+    // grpc main thread
     lis, err := net.Listen("tcp", ":50051")
     if err != nil {
         log.Fatalf("failed to listen: %v", err)
     }
     grpcServer := grpc.NewServer()
     pb.RegisterUserServiceServer(grpcServer, &grpc_server.UserGRPCServer{DB: DB})
-    log.Println("User gRPC server running on :50051")
+    log.Println("User gRPC running on :50051")
 
     if err := grpcServer.Serve(lis); err != nil {
         log.Fatalf("failed to serve gRPC: %v", err)
