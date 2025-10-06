@@ -20,7 +20,7 @@ It allows users to manage **income/expense categories**, set budgets, create tra
 ## 🧱 Project Structure
 
 ```text
-financer-main/
+fintrac-main/
 ├── category-service/
 │ ├── controller/
 │ ├── grpc_server/
@@ -76,9 +76,11 @@ docker-compose up --build
 ```
 This will start:
 
-- Category service (gRPC)
+- Category service (REST + gRPC Server and client)
 
 - Transaction service (REST + gRPC client)
+
+- User service (REST + gRPC Server)
 
 - PostgreSQL containers for each service
 
