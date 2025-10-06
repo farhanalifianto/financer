@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -14,7 +16,10 @@ import (
 	"transaction-service/routes"
 )
 
-var DB *gorm.DB
+var (
+	DB    *gorm.DB
+	Redis *redis.Client
+)
 
 func initDB() {
 	host := getEnv("DB_HOST", "localhost")
@@ -27,7 +32,7 @@ func initDB() {
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("failed to connect product db:", err)
+		log.Fatal("failed to connect transaction db:", err)
 	}
 
 	if err := DB.AutoMigrate(&model.Transaction{}); err != nil {
@@ -35,15 +40,36 @@ func initDB() {
 	}
 }
 
+func initRedis() {
+	addr := getEnv("REDIS_HOST", "localhost:6379")
+
+	Redis = redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "",
+		DB:       0,
+	})
+
+	// optional: test ping
+	if err := Redis.Ping(ctx()).Err(); err != nil {
+		log.Fatal("failed to connect to redis:", err)
+	}
+	log.Println("✅ Connected to Redis at", addr)
+}
+
 func main() {
 	initDB()
+	initRedis()
 
 	app := fiber.New()
 	app.Use(logger.New())
 
-	routes.RegisterTransactionRoutes(app, DB, middleware.AuthRequired)
+	// Pass DB & Redis ke routes
+	routes.RegisterTransactionRoutes(app, DB, Redis, middleware.AuthRequired)
 
-	app.Listen(":3003")
+	log.Println("🚀 Transaction service running on :3003")
+	if err := app.Listen(":3003"); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func getEnv(k, d string) string {
@@ -51,4 +77,9 @@ func getEnv(k, d string) string {
 		return v
 	}
 	return d
+}
+
+// helper untuk context redis
+func ctx() context.Context {
+	return context.Background()
 }

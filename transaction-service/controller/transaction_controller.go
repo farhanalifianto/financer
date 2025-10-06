@@ -1,16 +1,18 @@
 package controller
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
-
 	"transaction-service/grpc_client"
 
 	"transaction-service/model"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/redis/go-redis/v9"
 
 	"gorm.io/gorm"
 )
@@ -19,6 +21,7 @@ import (
 
 type TransactionController struct {
 	DB       *gorm.DB
+	Redis 	*redis.Client
 }
 
 // func (tc *TransactionController) List(c *fiber.Ctx) error {
@@ -95,8 +98,6 @@ func (tc *TransactionController) List(c *fiber.Ctx) error {
 	return c.JSON(response)
 	}
 
-
-
 func (tc *TransactionController) ListAll(c *fiber.Ctx) error {
 	var transactions []model.Transaction
 	if err := tc.DB.Find(&transactions).Error; err != nil {
@@ -108,8 +109,6 @@ func (tc *TransactionController) ListAll(c *fiber.Ctx) error {
 		return c.JSON(transactions)
 	}
 }
-
-
 
 // Create new transaction
 func (tc *TransactionController) Create(c *fiber.Ctx) error {
@@ -274,7 +273,7 @@ func (tc *TransactionController) Delete(c *fiber.Ctx) error {
     return c.JSON(fiber.Map{"message": "transaction deleted"})
 }
 
-func (tc *TransactionController) GetBalancerr(c *fiber.Ctx) error {
+func (tc *TransactionController) GetBalanceV1(c *fiber.Ctx) error {
 	
 	var transactions []model.Transaction
 
@@ -313,7 +312,7 @@ func (tc *TransactionController) GetBalancerr(c *fiber.Ctx) error {
 		"balance":       balance,
 	})
 }
-func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
+func (tc *TransactionController) GetBalanceV2(c *fiber.Ctx) error {
 	var transactions []model.Transaction
 	userID := c.Locals("user_id").(uint)
 
@@ -360,6 +359,84 @@ func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
 		"balance":       balance,
 	})
 }
+
+func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
+	ctx := context.Background()
+	userID := c.Locals("user_id").(uint)
+
+	var transactions []model.Transaction
+	if err := tc.DB.Where("owner_id = ?", userID).Find(&transactions).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	categoryClient := grpc_client.NewCategoryClient()
+
+	var totalIncome float64
+	var totalExpense float64
+
+	for _, t := range transactions {
+		cacheKey := fmt.Sprintf("category:%d", t.CategoryID)
+
+		var category *grpc_client.CategoryInfo
+
+		// check redis
+		if tc.Redis != nil {
+		if cachedData, err := tc.Redis.Get(ctx, cacheKey).Result(); err == nil {
+		var cachedCat grpc_client.CategoryInfo
+		if json.Unmarshal([]byte(cachedData), &cachedCat) == nil {
+			category = &cachedCat
+		} else {
+			_ = tc.Redis.Del(ctx, cacheKey).Err()
+		}
+		} else if err != redis.Nil {
+			log.Printf("redis get error for key %s: %v", cacheKey, err)
+		}
+}
+		// get category info if nill
+		if category == nil {
+			cat, err := categoryClient.GetCategoryInfo(t.CategoryID)
+			if err != nil {
+				// log error dan skip transaksi ini agar tidak crash seluruh endpoint
+				log.Printf("failed to fetch category info for ID %d: %v", t.CategoryID, err)
+				continue
+			}
+			if cat == nil {
+				// skip category if nill
+				log.Printf("category info nil for ID %d", t.CategoryID)
+				continue
+			}
+			category = cat
+
+			// save to redis
+			if tc.Redis != nil {
+				if jsonCat, err := json.Marshal(category); err == nil {
+					if err := tc.Redis.Set(ctx, cacheKey, jsonCat, 10*time.Minute).Err(); err != nil {
+						log.Printf("failed to set redis key %s: %v", cacheKey, err)
+					}
+				}
+			}
+		}
+
+		if category == nil {
+			continue
+		}
+
+		if category.Type == "income" {
+			totalIncome += float64(t.Amount)
+		} else if category.Type == "expense" {
+			totalExpense += float64(t.Amount)
+		}
+	}
+
+	balance := totalIncome - totalExpense
+
+	return c.JSON(fiber.Map{
+		"total_income":  totalIncome,
+		"total_expense": totalExpense,
+		"balance":       balance,
+	})
+}
+
 
 func (tc *TransactionController) GetBalanceCategory(c *fiber.Ctx) error {
 	var transactions []model.Transaction

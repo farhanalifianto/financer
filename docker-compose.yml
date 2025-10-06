@@ -12,6 +12,7 @@ services:
       - user-db-data:/var/lib/postgresql/data
     networks:
       - app-network
+
   category-db:
     image: postgres:15
     restart: always
@@ -36,6 +37,14 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+
   user-service:
     build: ./user-service
     environment:
@@ -50,7 +59,7 @@ services:
     networks:
       - app-network
     ports:
-      - "3001:3001" # REST API
+      - "3001:3001"
       - "50051:50051"
 
   transaction-service:
@@ -61,13 +70,15 @@ services:
       - DB_USER=postgres
       - DB_PASS=postgres
       - DB_NAME=transactiondb
+      - REDIS_HOST=redis:6379
     depends_on:
       - transaction-db
       - user-service
+      - redis #
     networks:
       - app-network
     ports:
-      - "3003:3003" # REST API (kalau ada)
+      - "3003:3003"
 
   category-service:
     build: ./category-service
@@ -83,7 +94,7 @@ services:
     networks:
       - app-network
     ports:
-      - "3004:3004" # REST API
+      - "3004:3004"
       - "50052:50052"
 
   nginx:
