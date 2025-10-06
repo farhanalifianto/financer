@@ -68,7 +68,7 @@ fintrac-main/
 
 ```bash
 git clone https://github.com/farhanalifianto/financer.git
-cd financer-main
+cd fintrac-main
 ```
 ### 2️⃣ Clone the Repository
 ```bash
