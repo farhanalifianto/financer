@@ -66,21 +66,18 @@ func (tc *TransactionController) List(c *fiber.Ctx) error {
 	var response []map[string]interface{}
 
 	for _, t := range transactions {
-		// Ambil info user
 		userInfo, err := userClient.GetUserInfo(t.OwnerID)
 		if err != nil {
 			log.Printf("failed to get user info for ID %d: %v", t.OwnerID, err)
 			continue
 		}
 
-		// Ambil info kategori
 		categoryInfo, err := categoryClient.GetCategoryInfo(t.CategoryID)
 		if err != nil {
 			log.Printf("failed to get category info for ID %d: %v", t.CategoryID, err)
 			continue
 		}
 
-		// Bentuk response
 		response = append(response, map[string]interface{}{
 			"id":           t.ID,
 			"name":         t.Name,
