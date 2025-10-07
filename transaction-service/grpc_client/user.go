@@ -14,8 +14,8 @@ type UserClient struct {
 	client pb.UserServiceClient
 }
 
-func NewUserClient() *UserClient {
-	conn, err := grpc.Dial("user-service:50051", grpc.WithInsecure())
+func NewUserClient () *UserClient {
+	conn, err := grpc.Dial("user-service:50051", grpc.WithInsecure()) // pakai WithTransportCredentials di production
 	if err != nil {
 		log.Fatalf("could not connect to user-service: %v", err)
 	}
@@ -23,8 +23,10 @@ func NewUserClient() *UserClient {
 	return &UserClient{client: c}
 }
 type UserInfo struct {
+	Id    uint
     Email string
     Name  string
+	Role string
 }
 
 func (uc *UserClient) GetUserInfo(userID uint) (*UserInfo, error) {
@@ -36,8 +38,26 @@ func (uc *UserClient) GetUserInfo(userID uint) (*UserInfo, error) {
 		return nil, err
 	}
 	 return &UserInfo{
+		Id : uint(res.Id),
         Email: res.Email,
         Name:  res.Name,
     }, nil
+}
+
+func (uc *UserClient) GetMe(token string) (*UserInfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3600)
+	defer cancel()
+
+	res, err := uc.client.GetMe(ctx, &pb.GetMeRequest{Token: token})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserInfo{
+		Id:    uint(res.Id),
+		Email: res.Email,
+		Name:  res.Name,
+		Role:  res.Role,
+	}, nil
 }
 

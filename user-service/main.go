@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"gorm.io/driver/postgres"
 
 	"gorm.io/gorm"
@@ -49,7 +50,7 @@ func initDB() {
 
 func main() {
 	initDB()
-    jwtSecret := getEnv("JWT_SECRET", "secret")
+    jwtSecret := getEnv("JWT_SECRET", "verysecretkey")
 
     //fiber goroutines
     go func() {
@@ -71,6 +72,7 @@ func main() {
     grpcServer := grpc.NewServer()
     pb.RegisterUserServiceServer(grpcServer, &grpc_server.UserGRPCServer{DB: DB})
     log.Println("User gRPC running on :50051")
+	reflection.Register(grpcServer)
 
     if err := grpcServer.Serve(lis); err != nil {
         log.Fatalf("failed to serve gRPC: %v", err)

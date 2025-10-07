@@ -11,14 +11,16 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"transaction-service/grpc_client"
 	"transaction-service/middleware"
 	"transaction-service/model"
 	"transaction-service/routes"
 )
 
 var (
-	DB    *gorm.DB
-	Redis *redis.Client
+	DB          *gorm.DB
+	Redis       *redis.Client
+	UserClient  *grpc_client.UserClient
 )
 
 func initDB() {
@@ -38,6 +40,7 @@ func initDB() {
 	if err := DB.AutoMigrate(&model.Transaction{}); err != nil {
 		log.Fatal(err)
 	}
+	log.Println("✅ Connected to Postgres")
 }
 
 func initRedis() {
@@ -56,6 +59,8 @@ func initRedis() {
 	log.Println("✅ Connected to Redis at", addr)
 }
 
+
+
 func main() {
 	initDB()
 	initRedis()
@@ -63,7 +68,9 @@ func main() {
 	app := fiber.New()
 	app.Use(logger.New())
 
-	// Pass DB & Redis ke routes
+	// Buat instance middleware dengan client gRPC
+
+	// Pass DB & Redis & middleware ke routes
 	routes.RegisterTransactionRoutes(app, DB, Redis, middleware.AuthRequired)
 
 	log.Println("🚀 Transaction service running on :3003")

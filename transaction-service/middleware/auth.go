@@ -1,49 +1,46 @@
 package middleware
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
-	"os"
-	"time"
+	"log"
+	"strings"
+
+	"transaction-service/grpc_client"
 
 	"github.com/gofiber/fiber/v2"
+	"google.golang.org/grpc/status"
 )
 
-var userServiceURL = getEnv("USER_SERVICE_URL", "http://user-service:3001")
+
 
 func AuthRequired(c *fiber.Ctx) error {
-	auth := c.Get("Authorization")
-	if auth == "" {
+	UserClient := grpc_client.NewUserClient()
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
 		return c.Status(401).JSON(fiber.Map{"error": "missing auth"})
 	}
 
-	req, _ := http.NewRequest("GET", userServiceURL+"/api/users/me", nil)
-	req.Header.Set("Authorization", auth)
-	client := &http.Client{Timeout: time.Second * 5}
-	resp, err := client.Do(req)
+	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if token == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "invalid auth header"})
+	}
+	
+
+	user, err := UserClient.GetMe(token)
 	if err != nil {
-		return c.Status(401).JSON(fiber.Map{"error": "auth failed"})
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return c.Status(401).JSON(fiber.Map{"error": "invalid token"})
-	}
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(resp.Body)
-	var user struct {
-		ID    uint   `json:"id"`
-		Email string `json:"email"`
-		Role  string `json:"role"`
-	}
-	if err := json.Unmarshal(buf.Bytes(), &user); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "decode failed"})
+		st, ok := status.FromError(err)
+		if ok {
+			log.Printf("gRPC error - code: %v, message: %s", st.Code(), st.Message())
+		} else {
+			log.Printf("Unknown gRPC error: %v", err)
+		}
+		return c.Status(401).JSON(fiber.Map{
+			"error": st.Message(), // atau pakai err.Error() jika bukan gRPC error
+		})
 	}
 
-	c.Locals("user_id", user.ID)
+	c.Locals("user_id", user.Id)
 	c.Locals("user_role", user.Role)
+
 	return c.Next()
 }
 
@@ -62,11 +59,4 @@ func RoleRequired(roles ...string) fiber.Handler {
 		}
 		return c.Status(403).JSON(fiber.Map{"error": "forbidden"})
 	}
-}
-
-func getEnv(k, d string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return d
 }

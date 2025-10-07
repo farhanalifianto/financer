@@ -24,24 +24,6 @@ type TransactionController struct {
 	Redis 	*redis.Client
 }
 
-// func (tc *TransactionController) List(c *fiber.Ctx) error {
-// 	var transactions []model.Transaction
-
-// 	userID := c.Locals("user_id").(uint)
-// 	role := c.Locals("user_role").(string)
-// 	if role == "admin" {
-// 		if err := tc.DB.Find(&transactions).Error; err != nil {
-// 			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-// 		}
-// 		return c.JSON(transactions)
-// 	}
-
-// 	if err := tc.DB.Where("owner_id = ?", userID).Find(&transactions).Error; err != nil {
-// 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-// 	}
-
-// 	return c.JSON(transactions)
-// }
 type UserInfo struct {
     Email string
     Name  string
@@ -166,52 +148,56 @@ func (tc *TransactionController) CreateFiltered(c *fiber.Ctx) error {
 }
 
 // Get transaction by id
+ 
 func (tc *TransactionController) Get(c *fiber.Ctx) error {
+	// 1. Ambil dan validasi ID dari params
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid id"})
 	}
+
+	// 2. Ambil user ID dari JWT middleware
 	userID := c.Locals("user_id").(uint)
-	var transaction []model.Transaction
-	if err := tc.DB.Where("owner_id = ?", userID).First(&transaction, id).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "not found"})
+
+	// 3. Ambil transaksi dari DB milik user tersebut
+	var transaction model.Transaction
+	if err := tc.DB.Where("id = ? AND owner_id = ?", id, userID).First(&transaction).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "transaction not found"})
 	}
-	if err := tc.DB.First(&transaction, id).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "not found"})
-	}
+
+	// 4. Inisialisasi gRPC client (sebaiknya ini nanti dipindah ke controller struct)
 	userClient := grpc_client.NewUserClient()
 	categoryClient := grpc_client.NewCategoryClient()
 
-	var response []map[string]interface{}
+	// 5. Ambil info user dari user-service
+	userInfo, err := userClient.GetUserInfo(transaction.OwnerID)
+	if err != nil {
+		log.Printf("failed to get user info for ID %d: %v", transaction.OwnerID, err)
+		return c.Status(500).JSON(fiber.Map{"error": "failed to fetch user info"})
+	}
 
-	for _, t := range transaction {
-		userInfo, err := userClient.GetUserInfo(t.OwnerID)
-		if err != nil {
-			log.Printf("failed to get user info for ID %d: %v", t.OwnerID, err)
-			continue
-		}
+	// 6. Ambil info category dari category-service
+	categoryInfo, err := categoryClient.GetCategoryInfo(transaction.CategoryID)
+	if err != nil {
+		log.Printf("failed to get category info for ID %d: %v", transaction.CategoryID, err)
+		return c.Status(500).JSON(fiber.Map{"error": "failed to fetch category info"})
+	}
 
-		categoryInfo, err := categoryClient.GetCategoryInfo(t.CategoryID)
-		if err != nil {
-			log.Printf("failed to get category info for ID %d: %v", t.CategoryID, err)
-			continue
-		}
-
-		response = append(response, map[string]interface{}{
-			"id":           t.ID,
-			"name":         t.Name,
-			"desc":         t.Desc,
-			"category_id":  t.CategoryID,
-			"category_name": categoryInfo.Name,
-			"created_at":   t.CreatedAt,
-			"amount":       t.Amount,
-			"owner_email":  userInfo.Email,
-			"owner_name":   userInfo.Name,
-		})
+	// 7. Buat response
+	response := map[string]interface{}{
+		"id":            transaction.ID,
+		"name":          transaction.Name,
+		"desc":          transaction.Desc,
+		"category_id":   transaction.CategoryID,
+		"category_name": categoryInfo.Name,
+		"created_at":    transaction.CreatedAt,
+		"amount":        transaction.Amount,
+		"owner_email":   userInfo.Email,
+		"owner_name":    userInfo.Name,
 	}
 
 	return c.JSON(response)
-	}
+}
 
 
 // Update transaction
@@ -271,93 +257,6 @@ func (tc *TransactionController) Delete(c *fiber.Ctx) error {
     }
 
     return c.JSON(fiber.Map{"message": "transaction deleted"})
-}
-
-func (tc *TransactionController) GetBalanceV1(c *fiber.Ctx) error {
-	
-	var transactions []model.Transaction
-
-	userID := c.Locals("user_id").(uint)
-	
-	if err := tc.DB.Where("owner_id = ?", userID).Find(&transactions).Error; err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	categoryClient := grpc_client.NewCategoryClient() // client gRPC ke category service
-
-	var totalIncome float64
-	var totalExpense float64
-
-	for _, t := range transactions {
-		
-		category, err := categoryClient.GetCategoryInfo(t.CategoryID)
-		if err != nil {
-			return c.Status(500).JSON(fiber.Map{
-				"error": "failed to fetch category info",
-			})
-		}
-
-		if category.Type == "income" {
-			totalIncome += float64(t.Amount)
-		} else if category.Type == "expense" {
-			totalExpense += float64(t.Amount)
-		}
-	}
-
-	balance := totalIncome - totalExpense
-
-	return c.JSON(fiber.Map{
-		"total_income":  totalIncome,
-		"total_expense": totalExpense,
-		"balance":       balance,
-	})
-}
-func (tc *TransactionController) GetBalanceV2(c *fiber.Ctx) error {
-	var transactions []model.Transaction
-	userID := c.Locals("user_id").(uint)
-
-	if err := tc.DB.Where("owner_id = ?", userID).Find(&transactions).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	categoryClient := grpc_client.NewCategoryClient()
-
-	var totalIncome float64
-	var totalExpense float64
-
-	// caching
-	categoryCache := make(map[uint]*grpc_client.CategoryInfo)
-
-	for _, t := range transactions {
-		var category *grpc_client.CategoryInfo
-		var ok bool
-
-		if category, ok = categoryCache[t.CategoryID]; !ok {
-			// if category doenst exist in cache
-			cat, err := categoryClient.GetCategoryInfo(t.CategoryID)
-			if err != nil {
-				return c.Status(500).JSON(fiber.Map{
-					"error": fmt.Sprintf("failed to fetch category info for ID %d", t.CategoryID),
-				})
-			}
-			category = cat
-			categoryCache[t.CategoryID] = category
-		}
-
-		if category.Type == "income" {
-			totalIncome += float64(t.Amount)
-		} else if category.Type == "expense" {
-			totalExpense += float64(t.Amount)
-		}
-	}
-
-	balance := totalIncome - totalExpense
-
-	return c.JSON(fiber.Map{
-		"total_income":  totalIncome,
-		"total_expense": totalExpense,
-		"balance":       balance,
-	})
 }
 
 func (tc *TransactionController) GetBalance(c *fiber.Ctx) error {
