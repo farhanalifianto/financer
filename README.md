@@ -1,6 +1,6 @@
 # 💰 Fintrac — Microservices Budget & Transaction Manager
 
-Financer is a microservices-based financial tracking application built using **Go**, **gRPC**, **Docker**, and **PostgreSQL**.  
+Financer is a microservices-based financial tracking application built using **Go**, **gRPC**, **Docker**, **Redis**, and **PostgreSQL**.  
 It allows users to manage **income/expense categories**, set budgets, create transactions, and calculate balances per category — all through a clean and modular microservices architecture.
 
 ---
@@ -20,7 +20,7 @@ It allows users to manage **income/expense categories**, set budgets, create tra
 ## 🧱 Project Structure
 
 ```text
-financer-main/
+fintrac-main/
 ├── category-service/
 │ ├── controller/
 │ ├── grpc_server/
@@ -68,7 +68,7 @@ financer-main/
 
 ```bash
 git clone https://github.com/farhanalifianto/financer.git
-cd financer-main
+cd fintrac-main
 ```
 ### 2️⃣ Clone the Repository
 ```bash
@@ -76,9 +76,11 @@ docker-compose up --build
 ```
 This will start:
 
-- Category service (gRPC)
+- Category service (REST + gRPC Server and client)
 
 - Transaction service (REST + gRPC client)
+
+- User service (REST + gRPC Server)
 
 - PostgreSQL containers for each service
 
