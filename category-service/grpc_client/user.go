@@ -23,8 +23,11 @@ func NewUserClient() *UserClient {
 	return &UserClient{client: c}
 }
 type UserInfo struct {
-    Email string
-    Name  string
+	Id 		uint
+    Email 	string
+    Name  	string
+	Role	string
+
 }
 
 func (uc *UserClient) GetUserEmail(userID uint) (*UserInfo, error) {
@@ -41,3 +44,20 @@ func (uc *UserClient) GetUserEmail(userID uint) (*UserInfo, error) {
     }, nil
 }
 
+func (uc *UserClient) GetMe(token string) (*UserInfo, error){
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3600)
+	defer cancel()
+
+	res, err := uc.client.GetMe(ctx, &pb.GetMeRequest{Token: token})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserInfo{
+		Id:    uint(res.Id),
+		Email: res.Email,
+		Name:  res.Name,
+		Role:  res.Role,
+	}, nil
+
+}
