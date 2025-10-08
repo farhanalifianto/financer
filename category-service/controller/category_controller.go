@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -17,32 +18,40 @@ type CategoryController struct {
 
 // List categories
 func (cc *CategoryController) List(c *fiber.Ctx) error {
+	
 	var categories []model.Category
 
 	userID := c.Locals("user_id").(uint)
 	role := c.Locals("user_role").(string)
 
+	var err error
 	if role == "admin" {
-		if err := cc.DB.Find(&categories).Error; err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-		}
+		err = cc.DB.Find(&categories).Error
 	} else {
-		if err := cc.DB.Where("owner_id = ?", userID).Find(&categories).Error; err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-		}
+		err = cc.DB.Where("owner_id = ?", userID).Find(&categories).Error
 	}
 
-	
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Siapkan user client gRPC untuk ambil email pemilik kategori
 	userClient := grpc_client.NewUserClient()
+
+	// Buat response final
 	var response []map[string]interface{}
-	for _, c := range categories {
-		UserInfo, _ := userClient.GetUserEmail(c.OwnerID)
+	for _, cat := range categories {
+		userInfo, userErr := userClient.GetUserEmail(cat.OwnerID)
+		if userErr != nil {
+			log.Printf("failed to get user email for owner_id %d: %v", cat.OwnerID, userErr)
+		}
+
 		response = append(response, map[string]interface{}{
-			"id":         c.ID,
-			"name":       c.Name,
-			"owner":      UserInfo.Email,
-			"type":       c.Type,
-			"bugdet":     c.Budget,
+			"id":     cat.ID,
+			"name":   cat.Name,
+			"owner":  userInfo.Email,
+			"type":   cat.Type,
+			"budget": cat.Budget,
 		})
 	}
 
@@ -88,7 +97,7 @@ func (cc *CategoryController) Get(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(uint)
 	role := c.Locals("user_role").(string)
 
-	var category []model.Category
+	var category model.Category
 	if role == "admin" {
 		if err := cc.DB.First(&category, id).Error; err != nil {
 			return c.Status(404).JSON(fiber.Map{"error": "not found"})
@@ -98,28 +107,27 @@ func (cc *CategoryController) Get(c *fiber.Ctx) error {
 			return c.Status(404).JSON(fiber.Map{"error": "not found"})
 		}
 	}
+
 	userClient := grpc_client.NewUserClient()
-	var response []map[string]interface{}
-	for _, c := range category {
-		UserInfo, _ := userClient.GetUserEmail(c.OwnerID)
-		response = append(response, map[string]interface{}{
-			"id":         c.ID,
-			"name":       c.Name,
-			"owner":      UserInfo.Email,
-			"type":       c.Type,
-			"bugdet":     c.Budget,
-		})
+	UserInfo, _ := userClient.GetUserEmail(category.OwnerID)
+
+	response := map[string]interface{}{
+		"id":     category.ID,
+		"name":   category.Name,
+		"owner":  UserInfo.Email,
+		"type":   category.Type,
+		"budget": category.Budget,
 	}
 
-
-	return c.JSON(category)
+	return c.JSON(response)
 }
 
-// Update category
+// update category
 
 type EditRequest struct {
 	Name 		string 		`json:"name"`
 	Budget    	float64  	`json:"budget"`
+	Type		string		`json:"type"`
 }
 
 func (cc *CategoryController) Update(c *fiber.Ctx) error {

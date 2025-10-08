@@ -68,7 +68,6 @@ func main() {
 	app := fiber.New()
 	app.Use(logger.New())
 
-	// Buat instance middleware dengan client gRPC
 
 	// Pass DB & Redis & middleware ke routes
 	routes.RegisterTransactionRoutes(app, DB, Redis, middleware.AuthRequired)

@@ -89,6 +89,7 @@ services:
       - DB_PASS=postgres
       - DB_NAME=categorydb
       - JWT_SECRET=verysecretkey
+      - REDIS_HOST=redis:6379
     depends_on:
       - category-db
     networks:

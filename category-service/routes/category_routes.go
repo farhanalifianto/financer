@@ -14,7 +14,7 @@ func RegisterCategoryRoutes(app *fiber.App, db *gorm.DB, authMiddleware fiber.Ha
 	api := app.Group("/api")
 	c := api.Group("/category") 
 
-	c.Get("/", authMiddleware, cc.List)                                       
+	c.Get("/list", authMiddleware, cc.List)                                       
 	c.Get("/all", authMiddleware, middleware.RoleRequired("admin"), cc.List)  
 	c.Get("/:id", authMiddleware, cc.Get)                                     
 	c.Post("/", authMiddleware, cc.Create)                                    
